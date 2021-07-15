@@ -1,10 +1,25 @@
 const express = require('express');
 const https = require('https');
+const bodyParser = require('body-parser')
 
 const app = express();
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/', (req, res) => {
-    url = "https://api.openweathermap.org/data/2.5/weather?q=Moscow&appid=20d011b069759d05ef1ee53aab315d5c&units=metric"
+    
+
+    res.sendFile(__dirname + "/index.html");
+
+
+
+    // res.send("Server is up and running!");
+});
+
+app.post('/', (req, res) => {
+    // const city = "Moscow";
+    const city = req.body.cityName;
+    const apikey = "20d011b069759d05ef1ee53aab315d5c"
+    var url = "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + apikey + "&units=metric"
     https.get(url, (response) => {
         console.log(response.statusCode);
         response.on("data", (data) => {
@@ -17,14 +32,13 @@ app.get('/', (req, res) => {
             console.log(weatherDesc + " " + temp);
 
             res.write("<p>Hi there!</p>");
-            var msg = "<p>Temperature in Moscow is " + temp + " and it is " + weatherDesc + "</p>";
+            var msg = "<p>Temperature in " + city + " is " + temp + " and it is " + weatherDesc + "</p>";
             res.write(msg);
             res.write("<img src="+ imageURL + ">");
             res.send();
         });
     });
 
-    // res.send("Server is up and running!");
 });
 
 app.listen(8085, () => {
