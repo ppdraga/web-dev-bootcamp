@@ -45,6 +45,13 @@ app.post("/", (req, res) => {
         auth: "ppdraga:" + apiKey
     }
     const request = https.request(url, options, (response) => {
+
+        if (response.statusCode === 200) {
+            res.sendFile(__dirname + "/success.html")
+        } else {
+            res.sendFile(__dirname + "/failure.html")
+        }
+
         console.log(response.statusCode);
         response.on("data", (data) => {
             const data2 = JSON.parse(data);
@@ -55,6 +62,10 @@ app.post("/", (req, res) => {
     request.end();
 
 })
+
+app.post("/failure", (req, res) => {
+    res.redirect("/");
+});
 
 app.listen(8085, () => {
     console.log("Listening on port 8085.");
