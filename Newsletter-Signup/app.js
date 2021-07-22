@@ -4,6 +4,12 @@ const express = require('express');
 const request = require('request')
 const https = require('https');
 const bodyParser = require('body-parser')
+const dotenv = require('dotenv');
+
+dotenv.config();
+// console.log(`Your api_key is ${process.env.API_KEY}`);
+
+const apiKey = process.env.API_KEY;
 
 const app = express();
 app.use(express.static("public"));
@@ -36,7 +42,7 @@ app.post("/", (req, res) => {
     const url = "https://us6.api.mailchimp.com/3.0/lists/2f65e3ad09";
     const options = {
         method: "POST",
-        auth: "ppdraga:36c174045e9d9b01e8f12f82800b0027-us6"
+        auth: "ppdraga:" + apiKey
     }
     const request = https.request(url, options, (response) => {
         console.log(response.statusCode);
@@ -53,9 +59,6 @@ app.post("/", (req, res) => {
 app.listen(8085, () => {
     console.log("Listening on port 8085.");
 });
-
-// api key:
-// 36c174045e9d9b01e8f12f82800b0027-us6
 
 // List id
 // 2f65e3ad09
