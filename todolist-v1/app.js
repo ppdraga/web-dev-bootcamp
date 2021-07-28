@@ -10,48 +10,28 @@ app.set('view engine', 'ejs');
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
 
+var items = [];
 
 app.get("/", (req, res) => {
     var today = new Date();
     var currenDay = today.getDay();
     var day = "";
 
-    // if (today.getDay() === 6 || today.getDay() === 0) {
-    //     day = "weekend";
-    // } else {
-    //     day = "weekday";
-    // }
-    switch (currenDay){
-        case 0:
-            day = "Sunday";
-            break;
-        case 1:
-            day = "Monday";
-            break;
-        case 2:
-            day = "Tueday";
-            break;
-        case 3:
-            day = "Wednesday";
-            break;
-        case 4:
-            day = "Thursday";
-            break;
-        case 5:
-            day = "Friday";
-            break;
-        case 6:
-            day = "Sunday";
-            break;
-        case 7:
-            day = "Saturday";
-            break;
-    }
-    res.render('list', {kindOfDay: day})
+    var options = {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+    };
+    var day = today.toLocaleDateString("en-US", options);
+
+
+    res.render('list', {kindOfDay: day, newListItems: items});
 })
 
 app.post("/", (req, res) => {
-    
+    var item = req.body.newItem;
+    items.push(item);
+    res.redirect("/");
 
 })
 
