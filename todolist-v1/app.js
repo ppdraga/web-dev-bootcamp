@@ -10,7 +10,7 @@ app.set('view engine', 'ejs');
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
 
-var items = [];
+var items = ["action 1", "action 2", "action 3"];
 
 app.get("/", (req, res) => {
     var today = new Date();
