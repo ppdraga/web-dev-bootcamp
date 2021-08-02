@@ -15,16 +15,49 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
+const posts = [];
 
+app.get("/", (req, res) => {
+  res.render('home', {startingContent: homeStartingContent, posts: posts});
+});
 
+app.get("/posts/:postTitle", (req, res) => {
+  const requestedTitle = req.params.postTitle;
+  posts.forEach( (post) => {
+    if (post.title === requestedTitle) {
+      console.log("Match found!");
+      return;
+    }
+  });
+  res.render('home', {startingContent: homeStartingContent, posts: posts});
+});
 
+app.get("/about", (req, res) => {
+  res.render('about', {startingContent: aboutContent});
+});
 
+app.get("/contact", (req, res) => {
+  res.render('contact', {startingContent: contactContent});
+});
 
+app.get("/compose", (req, res) => {
+  res.render('compose', {});
+});
 
+app.post("/compose", (req, res) => {
+  let postBody = "";
+  if (req.body.postBody == undefined) {
+    postBody = req.body.postTitle[1];
+  } else {
+    postBody = req.body.postBody;
+  }
 
-
-
-
+  posts.push({
+    title: req.body.postTitle,
+    content: postBody
+  });
+  res.redirect("/");
+});
 
 
 
