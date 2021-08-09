@@ -30,7 +30,10 @@ const articleSchema = {
 
 const Article = mongoose.model("Article", articleSchema);
 
-app.get("/articles", (req, res) => {
+app.route("/articles")
+
+// curl -i http://127.0.0.1:8085/articles
+.get((req, res) => {
     Article.find({}, function(err, articles){
         if (!err) {
             res.send(articles);
@@ -38,10 +41,10 @@ app.get("/articles", (req, res) => {
             res.send(err);
         }
     });
-});
+})
 
 // curl -i -X POST -d title="entry title" -d content="entry content" http://127.0.0.1:8085/articles
-app.post("/articles", (req, res) => {
+.post((req, res) => {
 
     const newArticle = new Article({
         title: req.body.title,
@@ -55,6 +58,76 @@ app.post("/articles", (req, res) => {
         }
     });
 
+})
+
+// curl -i -X DELETE http://127.0.0.1:8085/articles
+delete((req, res) => {
+    Article.deleteMany({}, function(err){
+        if (!err) {
+            res.send("Successfully deleted all articles!");
+        } else {
+            res.send(err);
+        }
+    });
+});
+
+app.route("/articles/:articleTitle")
+
+// curl -i http://127.0.0.1:8085/articles/API
+.get((req, res) => {
+    const articleTitle = req.params.articleTitle;
+    Article.findOne({title: articleTitle}, function(err, article){
+        if (!err) {
+            if (article) {
+                res.send(article);
+            } else {
+                res.send("No article matching the title was found!");
+            }
+            
+        } else {
+            res.send(err);
+        }
+    });
+})
+
+// curl -i -X PUT -d title="entry new title" -d content="entry new content" http://127.0.0.1:8085/articles/entry%20title
+.put((req, res) => {
+    const articleTitle = req.params.articleTitle;
+    const newArticle = {
+        title: req.body.title,
+        content: req.body.content
+    };
+    Article.replaceOne({title: articleTitle}, newArticle, {upsert: true}, function(err, result){
+        if (!err) {
+            res.send(result);
+        } else {
+            res.send(err);
+        }
+    });
+})
+
+// curl -i -X PATCH -d content="entry new222 content" http://127.0.0.1:8085/articles/entry%20new%20title
+.patch((req, res) => {
+    const articleTitle = req.params.articleTitle;
+    Article.updateOne({title: articleTitle}, {$set: req.body}, {upsert: true}, function(err, result){
+        if (!err) {
+            res.send(result);
+        } else {
+            res.send(err);
+        }
+    });
+})
+
+// curl -i -X DELETE http://127.0.0.1:8085/articles/entry%20title
+.delete((req, res) => {
+    const articleTitle = req.params.articleTitle;
+    Article.deleteOne({title: articleTitle}, function(err){
+        if (!err) {
+            res.send("Successfully delete entry!");
+        } else {
+            res.send(err);
+        }
+    });
 });
 
 
