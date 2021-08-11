@@ -5,6 +5,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -16,12 +20,14 @@ app.use(bodyParser.urlencoded({extended: true}));
 // db.createUser({user: 'mongo', pwd: 'mongo', roles: [ { role: 'readWrite', db: 'userDB'} ]});
 mongoose.connect("mongodb://mongo:mongo@localhost:27017/userDB", {useNewUrlParser: true, useUnifiedTopology: true});
 
-const userSchema = {
+const userSchema = new mongoose.Schema({
     email: String,
     password: String
-};
-const User = mongoose.model("User", userSchema);
+});
+const secret = process.env.SECRET;
+userSchema.plugin(encrypt, {secret: secret, encryptedFields: ["password"]});
 
+const User = mongoose.model("User", userSchema);
 
 app.get("/", (req, res) => {
     res.render("home");
