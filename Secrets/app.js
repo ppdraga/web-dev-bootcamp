@@ -5,9 +5,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-// const encrypt = require("mongoose-encryption");
 const dotenv = require('dotenv');
-const md5 = require("md5");
+
+// const encrypt = require("mongoose-encryption");
+// const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
 
 dotenv.config();
 
@@ -45,32 +49,41 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password),
+
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+        const newUser = new User({
+            email: req.body.username,
+            password: hash,
+        });
+        newUser.save((err) => {
+            if (!err) {
+                // res.redirect("/");
+                res.render("secrets");
+            } else {
+                res.send(err);
+            }
+        });
     });
-    newUser.save((err) => {
-        if (!err) {
-            // res.redirect("/");
-            res.render("secrets");
-        } else {
-            res.send(err);
-        }
-    })
+    
 });
 
 app.post("/login", (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
+    bcrypt.compare(password, saltRounds, (err, res) => {
+
+    });
     User.findOne({email: username}, (err, user) => {
         if (!err) {
             if (user) {
-                if (user.password === md5(password)) {
-                    res.render("secrets");
-                } else {
-                    console.log("password incorrect");
-                    res.render("login");
-                }
+                bcrypt.compare(password, user.password, (err, result) => {
+                    if (result) {
+                        res.render("secrets");
+                    } else {
+                        console.log("password incorrect");
+                        res.render("login");
+                    }
+                });
             } else {
                 console.log("no user found");
                 res.render("login");
@@ -78,7 +91,7 @@ app.post("/login", (req, res) => {
         } else {
             res.send(err);
         }
-    })
+    });
     
 });
 
