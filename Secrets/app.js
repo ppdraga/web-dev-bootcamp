@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const findOrCreate = require("mongoose-findorcreate");
 const dotenv = require('dotenv');
 
 const session = require('express-session');
@@ -16,6 +17,9 @@ const passportLocalMongoose = require('passport-local-mongoose');
 
 // const bcrypt = require("bcrypt");
 // const saltRounds = 10;
+
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 
 
 dotenv.config();
@@ -41,11 +45,14 @@ mongoose.set("useCreateIndex", true);
 
 const userSchema = new mongoose.Schema({
     email: String,
-    password: String
+    password: String,
+    googleId: String,
+    secret: String,
 });
 // const secret = process.env.SECRET;
 // userSchema.plugin(encrypt, {secret: secret, encryptedFields: ["password"]});
 userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
 const User = mongoose.model("User", userSchema);
 
@@ -53,13 +60,49 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:8085/auth/google/secrets",
+    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
+
 app.get("/", (req, res) => {
     res.render("home");
 });
 
+app.get("/auth/google", (req, res) => {
+    passport.authenticate('google', { scope: ["profile"] });
+});
+
+app.get('/auth/google/secrets', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect to secrets.
+    res.redirect('/secrets');
+  });
+
 app.get("/secrets", (req, res) => {
+
+
     if (req.isAuthenticated()) {
-        res.render("secrets");
+        User.find({"secret": {$ne: null}}, (err, users) => {
+            if (err) {
+                console.log(err);
+            } else {
+                if (users) {
+                    res.render("secrets", {usersWithSecrets: users});
+                }
+            }
+        });
+
+        
     } else {
         res.redirect("/login");
     }
@@ -151,6 +194,36 @@ app.post("/login", (req, res) => {
     
 });
 
+
+app.get("/submit", (req, res) => {
+    if (req.isAuthenticated()) {
+        res.render("submit");
+    } else {
+        res.redirect("/login");
+    }
+});
+
+app.post("/submit", (req, res) => {
+    if (req.isAuthenticated()) {
+        const submittedSecret = req.body.secret;
+        console.log(req.user);
+        User.findById(req.user._id, (err, foundUser) => {
+            if (err) {
+                console.log(err);
+            } else {
+                if (foundUser) {
+                    foundUser.secret = submittedSecret;
+                    foundUser.save(() => {
+                        res.redirect("/secrets");
+                    });
+                }
+            }
+        });
+
+    } else {
+        res.redirect("/login");
+    }
+});
 
 app.listen(8085, function() {
     console.log("Server started on port 8085");
